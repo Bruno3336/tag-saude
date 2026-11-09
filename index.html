@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cadastro de saúde</title>
+<style>
+  :root { --fundo:#f5f6f8; --card:#fff; --texto:#1c1f24; --borda:#d0d5dd; --cor:#c0392b; --ok:#1e7e34; }
+  @media (prefers-color-scheme: dark) {
+    :root { --fundo:#14171b; --card:#1e2227; --texto:#e8eaed; --borda:#3a4048; }
+  }
+  body { margin:0; font-family:Arial, sans-serif; background:var(--fundo); color:var(--texto); }
+  main { max-width:560px; margin:0 auto; padding:16px; }
+  h1 { font-size:1.3rem; margin:8px 0 16px; }
+  fieldset { background:var(--card); border:1px solid var(--borda); border-radius:10px; margin:0 0 14px; padding:12px 14px; }
+  legend { font-weight:bold; padding:0 6px; }
+  label { display:block; margin:10px 0 4px; font-size:.95rem; }
+  input[type=text], input[type=tel], select {
+    width:100%; box-sizing:border-box; padding:10px; font-size:1rem;
+    border:1px solid var(--borda); border-radius:8px; background:var(--card); color:var(--texto); }
+  .marcas label { display:inline-block; margin:6px 14px 0 0; }
+  button { width:100%; padding:14px; font-size:1.05rem; font-weight:bold; border:0; border-radius:10px;
+           background:var(--cor); color:#fff; margin-top:6px; }
+  button:disabled { opacity:.5; }
+  #status { margin-top:12px; padding:10px; border-radius:8px; display:none; }
+  #status.ok { display:block; background:#e6f4ea; color:var(--ok); }
+  #status.erro { display:block; background:#fdecea; color:#a02317; }
+  #status.info { display:block; background:#e8f0fe; color:#1a4ea3; }
+  #previa { font-family:monospace; font-size:.8rem; word-break:break-all; opacity:.8; }
+  #aviso-compat { display:none; background:#fff4e5; color:#7a4b00; padding:10px; border-radius:8px; margin-bottom:12px; }
+  dialog { max-width:520px; border:0; border-radius:12px; padding:20px; background:var(--card); color:var(--texto); }
+  dialog::backdrop { background:rgba(0,0,0,.6); }
+</style>
+</head>
+<body>
+
+<!-- Aviso de privacidade: aparece sempre que a página abre e exige confirmação -->
+<dialog id="aviso">
+  <h2>Aviso de privacidade</h2>
+  <p>Esta tag contém <b>dados de saúde de terceiros</b>, destinados ao atendimento de
+     socorristas em emergência. O acesso, uso ou alteração indevida desses dados pode
+     violar a Lei Geral de Proteção de Dados (LGPD).</p>
+  <p>Se você não é o dono desta tag nem um profissional de socorro, feche esta página.</p>
+  <button id="btn-aviso">Li e sou o dono da tag</button>
+</dialog>
+
+<main>
+  <h1>Cadastro de dados de emergência</h1>
+
+  <div id="aviso-compat">
+    Gravação direta na tag só funciona no <b>Chrome para Android</b>, em página HTTPS.
+    Aqui você ainda pode montar o texto e copiá-lo.
+  </div>
+
+  <form id="form" autocomplete="off">
+    <fieldset>
+      <legend>Identificação</legend>
+      <label for="nome">Nome completo</label>
+      <input type="text" id="nome" maxlength="40" required>
+      <label for="tipo">Tipo sanguíneo</label>
+      <select id="tipo" required>
+        <option value="">Selecione</option>
+        <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+        <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+        <option value="N/I">Não sei</option>
+      </select>
+    </fieldset>
+
+    <fieldset>
+      <legend>Alergias</legend>
+      <div class="marcas" id="alergias">
+        <label><input type="checkbox" value="dipirona"> Dipirona</label>
+        <label><input type="checkbox" value="penicilina"> Penicilina</label>
+        <label><input type="checkbox" value="AAS"> AAS</label>
+        <label><input type="checkbox" value="latex"> Látex</label>
+        <label><input type="checkbox" value="anestesico"> Anestésico</label>
+      </div>
+      <label for="alergias-outras">Outras alergias</label>
+      <input type="text" id="alergias-outras" maxlength="40">
+    </fieldset>
+
+    <fieldset>
+      <legend>Condições e medicamentos importantes</legend>
+      <div class="marcas" id="condicoes">
+        <label><input type="checkbox" value="diabetes"> Diabetes</label>
+        <label><input type="checkbox" value="hipertensao"> Hipertensão</label>
+        <label><input type="checkbox" value="epilepsia"> Epilepsia</label>
+        <label><input type="checkbox" value="anticoagulante"> Anticoagulante</label>
+        <label><input type="checkbox" value="marca-passo"> Marca-passo</label>
+      </div>
+      <label for="condicoes-outras">Outras</label>
+      <input type="text" id="condicoes-outras" maxlength="40">
+    </fieldset>
+
+    <fieldset>
+      <legend>Contatos de emergência</legend>
+      <label for="c1">Contato 1 (nome)</label>
+      <input type="text" id="c1" maxlength="30" required>
+      <label for="t1">Telefone com DDD</label>
+      <input type="tel" id="t1" inputmode="numeric" maxlength="15" required>
+      <label for="c2">Contato 2 (nome, opcional)</label>
+      <input type="text" id="c2" maxlength="30">
+      <label for="t2">Telefone com DDD</label>
+      <input type="tel" id="t2" inputmode="numeric" maxlength="15">
+    </fieldset>
+
+    <p>Tamanho: <b id="bytes">0</b> / 800 bytes</p>
+    <p id="previa"></p>
+    <button type="submit" id="gravar">Gravar na tag</button>
+  </form>
+
+  <div id="status"></div>
+</main>
+
+<script>
+// ---------- Configuração ----------
+const VERSAO = "S1";                 // versão do formato (o leitor confere)
+const LIMITE = 800;                  // bytes de texto (NTAG216 tem 872 úteis; sobra margem p/ URL e cabeçalhos)
+// URL gravada na tag = esta própria página, sem query/hash
+const URL_CADASTRO = location.href.split("#")[0].split("?")[0];
+
+// ---------- Utilidades ----------
+// Remove o separador "|" e espaços repetidos, para não quebrar o formato
+const limpa = s => (s || "").replace(/\|/g, " ").replace(/\s+/g, " ").trim();
+// Mantém só dígitos no telefone
+const soDigitos = s => (s || "").replace(/\D/g, "");
+const $ = id => document.getElementById(id);
+
+// Junta os marcados + o campo "outras" numa lista separada por vírgula
+function lista(idGrupo, idOutras) {
+  const marcados = [...document.querySelectorAll(`#${idGrupo} input:checked`)].map(i => i.value);
+  const outras = limpa($(idOutras).value).replace(/,/g, " ");
+  if (outras) marcados.push(outras);
+  return marcados.join(",");
+}
+
+// Monta o texto no formato: S1|nome|tipo|alergias|condicoes|c1|t1|c2|t2
+function montaTexto() {
+  return [
+    VERSAO,
+    limpa($("nome").value),
+    $("tipo").value,
+    lista("alergias", "alergias-outras"),
+    lista("condicoes", "condicoes-outras"),
+    limpa($("c1").value),
+    soDigitos($("t1").value),
+    limpa($("c2").value),
+    soDigitos($("t2").value)
+  ].join("|");
+}
+
+function mostra(tipo, msg) {
+  const el = $("status");
+  el.className = tipo;
+  el.textContent = msg;
+}
+
+// Atualiza prévia e contador a cada alteração
+function atualiza() {
+  const texto = montaTexto();
+  const n = new TextEncoder().encode(texto).length;   // bytes reais (acentos ocupam 2)
+  $("bytes").textContent = n;
+  $("bytes").style.color = n > LIMITE ? "#c0392b" : "";
+  $("previa").textContent = texto;
+  return { texto, n };
+}
+$("form").addEventListener("input", atualiza);
+
+// ---------- Aviso de privacidade ----------
+$("aviso").showModal();
+$("btn-aviso").addEventListener("click", () => $("aviso").close());
+
+// ---------- Compatibilidade ----------
+const temNFC = "NDEFReader" in window && location.protocol === "https:";
+if (!temNFC) {
+  $("aviso-compat").style.display = "block";
+  $("gravar").textContent = "Copiar texto";
+}
+
+// ---------- Envio ----------
+$("form").addEventListener("submit", async ev => {
+  ev.preventDefault();
+  const { texto, n } = atualiza();
+
+  if (n > LIMITE) { mostra("erro", "Texto grande demais. Reduza alergias/condições."); return; }
+  if (texto.split("|").length !== 9) { mostra("erro", "Formato inválido. Recarregue a página."); return; }
+
+  // Sem Web NFC: só copia o texto (para gravar com outro app)
+  if (!temNFC) {
+    try { await navigator.clipboard.writeText(texto); mostra("ok", "Texto copiado."); }
+    catch { mostra("erro", "Não consegui copiar. Copie a prévia manualmente."); }
+    return;
+  }
+
+  // Com Web NFC: grava URL (1º registro) + texto (2º registro)
+  try {
+    $("gravar").disabled = true;
+    mostra("info", "Encoste a tag na traseira do celular e aguarde...");
+    const ndef = new NDEFReader();
+    await ndef.write(
+      { records: [
+          { recordType: "url",  data: URL_CADASTRO },        // abre esta página ao encostar
+          { recordType: "text", data: texto, lang: "pt" }     // dados lidos pelo aparelho
+      ] },
+      { overwrite: true }                                     // substitui o conteúdo anterior
+    );
+    mostra("ok", "Tag gravada com sucesso!");
+  } catch (e) {
+    const msgs = {
+      NotAllowedError: "Permissão de NFC negada. Ative o NFC e permita nesta página.",
+      NotSupportedError: "NFC indisponível neste aparelho.",
+      NetworkError: "Não consegui gravar. Mantenha a tag encostada e tente de novo.",
+      AbortError: "Operação cancelada."
+    };
+    mostra("erro", msgs[e.name] || ("Erro: " + e.message));
+  } finally {
+    $("gravar").disabled = false;
+  }
+});
+
+atualiza();
+</script>
+</body>
+</html>
